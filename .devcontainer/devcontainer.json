@@ -1,0 +1,14 @@
+{
+  "name": "MKP v Pythonu – lineární pružnost",
+  "image": "mcr.microsoft.com/devcontainers/python:3.13",
+  // knihovny, které potřebuje pip balík gmsh (libGLU, X11, fontconfig), a Python balíky
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y --no-install-recommends libglu1-mesa libgl1 libxrender1 libxcursor1 libxfixes3 libxext6 libxft2 libfontconfig1 libxinerama1 libx11-6 libgomp1 && pip install --user -r requirements.txt",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-toolsai.jupyter"]
+    },
+    "codespaces": {
+      "openFiles": ["prednaska_python_90min.ipynb"]
+    }
+  }
+}
