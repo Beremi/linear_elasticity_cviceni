@@ -8,7 +8,7 @@
       "extensions": ["ms-python.python", "ms-toolsai.jupyter"]
     },
     "codespaces": {
-      "openFiles": ["prednaska_python_90min.ipynb"]
+      "openFiles": ["cviceni_mkp_pruznost.ipynb"]
     }
   }
 }

@@ -1,4 +1,4 @@
-"""Výsledek 90minutové hodiny: MKP pro rovinnou deformaci v NumPy/SciPy.
+"""Výsledek numerického cvičení: MKP pro rovinnou deformaci v NumPy/SciPy.
 
 Kód sleduje značení kapitoly 6 učebního textu: referenční prvek, triangulace
 (coord, elem), kvadratura, izoparametrická transformace, matice B a D_elast,

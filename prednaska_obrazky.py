@@ -1,4 +1,4 @@
-"""Doprovodné obrázky a kreslicí funkce k notebooku prednaska_python_90min.ipynb.
+"""Doprovodné obrázky a kreslicí funkce k notebooku cviceni_mkp_pruznost.ipynb.
 
 Notebook obsahuje jen kód potřebný k výpočtu. Ilustrační obrázky (referenční
 prvky, bazické funkce, transformace, struktura matic, ...) vyrábí tento skript

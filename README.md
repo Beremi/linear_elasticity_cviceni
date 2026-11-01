@@ -2,7 +2,7 @@
 
 Numerické cvičení k Matematickému semináři III (kapitola 6 učebního textu S. Sysaly).
 
-- `prednaska_python_90min.ipynb` – notebook cvičení,
+- `cviceni_mkp_pruznost.ipynb` – notebook cvičení,
 - `mkp2d.py` – hotový kód z cvičení (lze převzít do úloh),
 - `prednaska_obrazky.py` – kreslicí funkce a skript, který vyrábí obrázky v `obrazky_prednaska/`.
 
