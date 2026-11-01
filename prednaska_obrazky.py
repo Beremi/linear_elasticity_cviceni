@@ -342,26 +342,6 @@ def obr_matice(coord, elem):
     ax.set_title(r"struktura $\tilde K$")
     uloz(fig, "11_sestaveni.png")
 
-    Bv = np.zeros((len(elem), 1, 3, 6))
-    Bv[:, :, 0, 0::2], Bv[:, :, 1, 1::2] = dphi[..., 0], dphi[..., 1]
-    Bv[:, :, 2, 0::2], Bv[:, :, 2, 1::2] = dphi[..., 1], dphi[..., 0]
-    from scipy import sparse
-    radky, sl = np.broadcast_arrays(np.arange(3 * len(elem)).reshape(-1, 1, 3, 1),
-                                    mkp2d.stupne_volnosti(elem)[:, None, None, :])
-    B = sparse.coo_array((Bv.ravel(), (radky.ravel(), sl.ravel())), shape=(3 * len(elem), 2 * len(coord)))
-    D = sparse.kron(sparse.diags_array(w.ravel()), C)
-    fig, axs = plt.subplots(1, 4, figsize=(15, 4))
-    for ax, M, nazev in zip(axs, [B, D, Kt], [r"$B$", r"$D_{\rm elast}$", r"$\tilde K=B^\top D_{\rm elast}B$"]):
-        ax.spy(M, markersize=1.5)
-        ax.set_title(f"{nazev}  {M.shape[0]}×{M.shape[1]}")
-    D12 = D.toarray()[:12, :12]
-    axs[3].imshow(np.ma.masked_where(D12 == 0, D12), cmap="viridis")
-    axs[3].set_title(r"výřez $D_{\rm elast}$: bloky $\omega_{T,q}C$")
-    for k in range(4):
-        axs[3].add_patch(plt.Rectangle((3 * k - 0.5, 3 * k - 0.5), 3, 3, fill=False, ec="tab:red", lw=1.5))
-    fig.tight_layout()
-    uloz(fig, "12_struktura_B_D_K.png")
-
     tuhe = {"posun v $x_1$": (1 + 0 * coord[:, 0], 0 * coord[:, 0]),
             "posun v $x_2$": (0 * coord[:, 0], 1 + 0 * coord[:, 0]),
             "otočení": (-(coord[:, 1] - 0.5), coord[:, 0] - 2)}
