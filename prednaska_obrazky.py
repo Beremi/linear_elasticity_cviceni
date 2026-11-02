@@ -149,21 +149,26 @@ def uloz(fig, nazev):
 
 
 def gmsh_obdelnik(nx, ny, ctyruhelniky=False):
-    """Stejná síť jako obdelnik_gmsh v notebooku (strukturovaná, transfinite)."""
+    """Stejná síť se stejným číslováním uzlů jako sit_obdelnik v notebooku
+    (strukturovaná, transfinite; uzly seřazené podle tagů Gmsh)."""
     import gmsh
     gmsh.clear()
-    s = gmsh.model.occ.addRectangle(0, 0, 0, 4, 1)
+    gmsh.model.occ.addRectangle(0, 0, 0, 4, 1)                 # plocha 1, hrany 1 dolní, 2 pravá, 3 horní, 4 levá
     gmsh.model.occ.synchronize()
-    g0 = gmsh.model.getEntitiesInBoundingBox(-1e-6, -1e-6, -1e-6, 1e-6, 1 + 1e-6, 1e-6, 1)
-    gmsh.model.addPhysicalGroup(1, [t for _, t in g0], name="Gamma0")
-    for _, t in gmsh.model.getEntities(1):
-        gmsh.model.mesh.setTransfiniteCurve(t, (nx if gmsh.model.occ.getMass(1, t) > 1.5 else ny) + 1)
-    gmsh.model.mesh.setTransfiniteSurface(s)
+    gmsh.model.addPhysicalGroup(1, [4], tag=1, name="Gamma0")  # levá hrana = Gamma_0
+    for hrana, pocet in [(1, nx), (2, ny), (3, nx), (4, ny)]:
+        gmsh.model.mesh.setTransfiniteCurve(hrana, pocet + 1)
+    gmsh.model.mesh.setTransfiniteSurface(1)
     if ctyruhelniky:
-        gmsh.model.mesh.setRecombine(2, s)
+        gmsh.model.mesh.setRecombine(2, 1)
     gmsh.model.mesh.generate(2)
-    coord, elem, skupiny = mkp2d.z_gmsh()
-    return coord, elem["Quadrilateral 4" if ctyruhelniky else "Triangle 3"], skupiny["Gamma0"]
+    tagy, xyz, _ = gmsh.model.mesh.getNodes()
+    typ, n_p = (3, 4) if ctyruhelniky else (2, 3)
+    _, uzly = gmsh.model.mesh.getElementsByType(typ)
+    uzly_g0, _ = gmsh.model.mesh.getNodesForPhysicalGroup(1, 1)
+    return (xyz.reshape(-1, 3)[np.argsort(tagy), :2],
+            uzly.reshape(-1, n_p).astype(int) - 1,
+            uzly_g0.astype(int) - 1)
 
 
 # ------------------------------------------------------------ jednotlivé obrázky
