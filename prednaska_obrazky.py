@@ -306,29 +306,29 @@ def obr_chi_z_baze():
     fig.text(0.5, 0.5, r"$\longrightarrow$" + "\n" + r"$\chi_T$", fontsize=20, ha="center", va="center")
     uloz(fig, "05a_chi_z_baze.png")
 
-    N = np.array([(0, 0), (3, 0), (2.5, 2), (0.5, 1.5)], float)
+    N = np.array([(1.0, 0.5), (3.0, 1.0), (1.6, 2.4)])
 
-    # hrana xi_2 = -1: nenulové jen phi^_1 a phi^_2 (lineárně) -> úsečka N_T,1 N_T,2; sousedé na sebe sedí
+    # hrana N^_2 N^_3 (xi_1 + xi_2 = 1): nenulové jen phi^_2 a phi^_3 (lineárně) -> úsečka N_T,2 N_T,3
     fig, axs = plt.subplots(1, 2, figsize=(14, 4.2), gridspec_kw={"width_ratios": [1, 1.5]})
-    t = np.linspace(-1, 1, 101)
-    hrana = vycisli(PHI_Q1, np.column_stack([t, -1 + 0 * t]))[:, :, 0]
-    for p in range(4):
-        axs[0].plot(t, hrana[:, p] + 0.012 * (p >= 2) * (p - 1.5), color=barvy[p], lw=2.5,
-                    label=rf"$\hat\varphi_{p + 1}(\xi_1,-1)$")
-    axs[0].set_xlabel(r"$\xi_1$ na dolní hraně $\xi_2=-1$")
+    t = np.linspace(0, 1, 101)
+    hrana = vycisli(PHI_P1, np.column_stack([1 - t, t]))[:, :, 0]
+    for p in range(3):
+        axs[0].plot(t, hrana[:, p], color=barvy[p], lw=2.5, label=rf"$\hat\varphi_{p + 1}(1-t,\,t)$")
+    axs[0].set_xlabel(r"$t$ na hraně $\hat N_2\hat N_3$: $\xi=(1-t,\,t)$")
     axs[0].legend(fontsize=10)
-    axs[0].set_title(r"na hraně jsou nenulové jen funkce jejích dvou uzlů" + "\n" + r"$\Rightarrow$ hrana se zobrazí na úsečku $N_{T,1}N_{T,2}$")
+    axs[0].set_title(r"na hraně jsou nenulové jen funkce jejích dvou uzlů" + "\n" + r"$\Rightarrow$ hrana se zobrazí na úsečku $N_{T,2}N_{T,3}$")
 
-    N2 = np.array([(3, 0), (5, 0.6), (4.6, 2.6), (2.5, 2)], float)   # soused se společnou hranou N_T,2 N_T,3
+    N2 = np.array([N[1], (3.4, 2.9), N[2]])   # soused T' se společnou hranou N_T,2 N_T,3 (levotočivě)
+    s = np.linspace(0, 1, 7)
     for M, barva, jmeno in [(N, "tab:blue", "T"), (N2, "tab:orange", "T'")]:
-        s = np.linspace(-1, 1, 9)
-        for c in s:
-            for cara in (np.column_stack([c + 0 * t, t]), np.column_stack([t, c + 0 * t])):
-                axs[1].plot(*chi(PHI_Q1, M, cara).T, color=barva, lw=0.7)
+        for c in s[1:-1]:
+            for cara in (np.column_stack([c + 0 * t, (1 - c) * t]), np.column_stack([(1 - c) * t, c + 0 * t]),
+                         np.column_stack([c * (1 - t), c * t])):
+                axs[1].plot(*chi(PHI_P1, M, cara).T, color=barva, lw=0.7)
         axs[1].fill(*M.T, fc="none", ec=barva, lw=2)
         axs[1].text(*M.mean(axis=0), f"${jmeno}$", fontsize=16, color=barva, ha="center", va="center",
                     bbox=dict(fc="white", ec="none", alpha=0.8))
-    spol = chi(PHI_Q1, N, np.column_stack([1 + 0 * s, s]))
+    spol = chi(PHI_P1, N, np.column_stack([1 - s, s]))
     axs[1].plot(*spol.T, "o", color="k", ms=5, label="body mřížky na společné hraně z obou prvků")
     axs[1].set_aspect("equal")
     axs[1].legend(loc="upper center", bbox_to_anchor=(0.5, -0.08), fontsize=10)
