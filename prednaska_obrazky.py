@@ -271,55 +271,42 @@ def obr_transformace():
 
 def obr_chi_z_baze():
     """chi_T = sum_p N_T,p phi^_p: bazické funkce jako váhy uzlů, hrany a sousední prvky."""
-    uzly = np.array(REF_UZLY["Q1 (obr. 6.4)"], float)
-    N = np.array([(0, 0), (3, 0), (2.5, 2), (0.5, 1.5)], float)
     barvy = ["tab:blue", "tab:orange", "tab:green", "tab:purple"]
-    body = body_na_prvku(False, 40)
-    hodnoty = vycisli(PHI_Q1, body)[:, :, 0]
-    tri = mtri.Triangulation(*body.T).triangles
 
-    # 1. řádek: bazické funkce = váhy uzlů; 2. řádek: obraz bodu xi jako vážený průměr uzlů
-    fig = plt.figure(figsize=(15, 8.4))
-    gs = fig.add_gridspec(2, 4, height_ratios=[1, 1.35])
-    for p in range(4):
-        ax = fig.add_subplot(gs[0, p])
-        obr = ax.tripcolor(*body.T, tri, hodnoty[:, p], shading="gouraud", cmap="Greys", vmin=0, vmax=1.6)
-        ax.tricontour(*body.T, tri, hodnoty[:, p], levels=[0.25, 0.5, 0.75], colors=barvy[p], linewidths=0.8)
-        ax.fill(*uzly.T, fc="none", ec="k", lw=0.8)
-        for q, (x, y) in enumerate(uzly):
-            ax.plot(x, y, "o", ms=11 if q == p else 7, color=barvy[q] if q == p else "white", mec=barvy[q], zorder=3)
-            ax.annotate("1" if q == p else "0", (x, y), xytext=(-14 if x < 0 else 6, -14 if y < 0 else 6),
-                        textcoords="offset points", fontsize=11, color=barvy[q])
+    # P1 v jednom řádku: bod xi rozdělí T^ na tři trojúhelníky; ten naproti uzlu p má
+    # obsah phi^_p(xi) |T^| -> váhy uzlů. chi_T přenese obrázek na T se stejnými vahami.
+    ref = np.array(REF_UZLY["P1 (obr. 6.2)"], float)
+    N_P1 = np.array([(1.0, 0.5), (3.0, 1.0), (1.6, 2.4)])
+    xi_a = np.array([0.25, 0.2])
+    w = vycisli(PHI_P1, xi_a[None])[0, :, 0]
+    fig, axs = plt.subplots(1, 2, figsize=(13, 4.6))
+    for ax, M, bod, nazev in [(axs[0], ref, xi_a, r"$\xi$"), (axs[1], N_P1, w @ N_P1, r"$x=\chi_T(\xi)$")]:
+        for p in range(3):
+            ostatni = [M[q] for q in range(3) if q != p]
+            ax.fill(*np.array([bod, *ostatni]).T, fc=barvy[p], alpha=0.25, ec="none")
+            stred = (bod + sum(ostatni)) / 3
+            ax.text(*stred, rf"$\hat\varphi_{p + 1}(\xi)$" + "\n" + f"= {w[p]:.2f}", color=barvy[p],
+                    ha="center", va="center", fontsize=11)
+            ax.plot(*np.column_stack([bod, M[p]]), color=barvy[p], lw=1 + 8 * w[p])
+            ax.plot(*M[p], "o", color=barvy[p], ms=6 + 16 * w[p], zorder=3)
+        ax.fill(*M.T, fc="none", ec="k", lw=1.2)
+        ax.plot(*bod, "*", color="tab:red", ms=16, zorder=4)
+        ax.annotate(nazev, bod, xytext=(8, 8), textcoords="offset points", color="tab:red", fontsize=13)
         ax.set_aspect("equal")
-        ax.set_xlim(-1.35, 1.35)
-        ax.set_ylim(-1.35, 1.35)
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.set_title(rf"$\hat\varphi_{p + 1}$ = váha uzlu $N_{{T,{p + 1}}}$", color=barvy[p])
-
-    xi_a = np.array([[0.4, -0.5]])
-    w = vycisli(PHI_Q1, xi_a)[0, :, 0]
-    ax = fig.add_subplot(gs[1, 0:2])
-    kresli_transformaci(ax, PHI_Q1, uzly, detJ=False, referencni=True)
-    ax.plot(*xi_a.T, "*", color="tab:red", ms=16, zorder=4)
-    ax.annotate(r"$\xi$", xi_a[0], xytext=(8, 6), textcoords="offset points", color="tab:red", fontsize=14)
-    ax.set_title(r"referenční prvek $\hat T$, bod $\xi$")
-
-    ax = fig.add_subplot(gs[1, 2:4])
-    kresli_transformaci(ax, PHI_Q1, N, detJ=False)
-    x = w @ N
-    for p in range(4):
-        ax.plot(*np.column_stack([x, N[p]]), color=barvy[p], lw=1 + 10 * w[p], alpha=0.75, zorder=2)
-        ax.plot(*N[p], "o", color=barvy[p], ms=6 + 18 * w[p], zorder=3)
-        ax.annotate(rf"$\hat\varphi_{p + 1}(\xi)={w[p]:.3f}$", (x + N[p]) / 2, color=barvy[p], fontsize=11,
-                    ha="center", va="center", bbox=dict(fc="white", ec="none", alpha=0.85))
-    ax.plot(*x, "*", color="tab:red", ms=16, zorder=4)
-    ax.annotate(r"$x=\chi_T(\xi)$", x, xytext=(-12, 12), textcoords="offset points", color="tab:red", fontsize=13,
-                ha="right", bbox=dict(fc="white", ec="none", alpha=0.85))
-    ax.set_title(r"$\chi_T(\xi)=\sum_p\hat\varphi_p(\xi)\,N_{T,p}$: vážený průměr uzlů, $\sum_p\hat\varphi_p(\xi)=1$")
-    fig.text(0.5, 0.29, r"$\longrightarrow$" + "\n" + r"$\chi_T$", fontsize=20, ha="center", va="center")
-    fig.tight_layout()
+        ax.margins(0.12)
+        ax.axis("off")
+    for p in range(3):
+        posun = [(-14, -4), (8, 8), (10, -4)][p]
+        for ax, M, jmeno in [(axs[0], ref, rf"$\hat N_{p + 1}$"), (axs[1], N_P1, rf"$N_{{T,{p + 1}}}$")]:
+            ax.annotate(jmeno, M[p], xytext=posun, textcoords="offset points", color=barvy[p], fontsize=13,
+                        ha="right" if p == 0 else "left", zorder=5)
+    axs[0].set_title(r"referenční prvek $\hat T$: váhy $\hat\varphi_p(\xi)$, součet 1")
+    axs[1].set_title(r"$\chi_T(\xi)=\sum_p\hat\varphi_p(\xi)\,N_{T,p}$: vážený průměr uzlů $T$")
+    fig.subplots_adjust(wspace=0.45)
+    fig.text(0.5, 0.5, r"$\longrightarrow$" + "\n" + r"$\chi_T$", fontsize=20, ha="center", va="center")
     uloz(fig, "05a_chi_z_baze.png")
+
+    N = np.array([(0, 0), (3, 0), (2.5, 2), (0.5, 1.5)], float)
 
     # hrana xi_2 = -1: nenulové jen phi^_1 a phi^_2 (lineárně) -> úsečka N_T,1 N_T,2; sousedé na sebe sedí
     fig, axs = plt.subplots(1, 2, figsize=(14, 4.2), gridspec_kw={"width_ratios": [1, 1.5]})
