@@ -269,6 +269,87 @@ def obr_transformace():
     uloz(fig, "06_transformace_Q1.png")
 
 
+def obr_chi_z_baze():
+    """chi_T = sum_p N_T,p phi^_p: bazické funkce jako váhy uzlů, hrany a sousední prvky."""
+    uzly = np.array(REF_UZLY["Q1 (obr. 6.4)"], float)
+    N = np.array([(0, 0), (3, 0), (2.5, 2), (0.5, 1.5)], float)
+    barvy = ["tab:blue", "tab:orange", "tab:green", "tab:purple"]
+    body = body_na_prvku(False, 40)
+    hodnoty = vycisli(PHI_Q1, body)[:, :, 0]
+    tri = mtri.Triangulation(*body.T).triangles
+
+    # 1. řádek: bazické funkce = váhy uzlů; 2. řádek: obraz bodu xi jako vážený průměr uzlů
+    fig = plt.figure(figsize=(15, 8.4))
+    gs = fig.add_gridspec(2, 4, height_ratios=[1, 1.35])
+    for p in range(4):
+        ax = fig.add_subplot(gs[0, p])
+        obr = ax.tripcolor(*body.T, tri, hodnoty[:, p], shading="gouraud", cmap="Greys", vmin=0, vmax=1.6)
+        ax.tricontour(*body.T, tri, hodnoty[:, p], levels=[0.25, 0.5, 0.75], colors=barvy[p], linewidths=0.8)
+        ax.fill(*uzly.T, fc="none", ec="k", lw=0.8)
+        for q, (x, y) in enumerate(uzly):
+            ax.plot(x, y, "o", ms=11 if q == p else 7, color=barvy[q] if q == p else "white", mec=barvy[q], zorder=3)
+            ax.annotate("1" if q == p else "0", (x, y), xytext=(-14 if x < 0 else 6, -14 if y < 0 else 6),
+                        textcoords="offset points", fontsize=11, color=barvy[q])
+        ax.set_aspect("equal")
+        ax.set_xlim(-1.35, 1.35)
+        ax.set_ylim(-1.35, 1.35)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_title(rf"$\hat\varphi_{p + 1}$ = váha uzlu $N_{{T,{p + 1}}}$", color=barvy[p])
+
+    xi_a = np.array([[0.4, -0.5]])
+    w = vycisli(PHI_Q1, xi_a)[0, :, 0]
+    ax = fig.add_subplot(gs[1, 0:2])
+    kresli_transformaci(ax, PHI_Q1, uzly, detJ=False, referencni=True)
+    ax.plot(*xi_a.T, "*", color="tab:red", ms=16, zorder=4)
+    ax.annotate(r"$\xi$", xi_a[0], xytext=(8, 6), textcoords="offset points", color="tab:red", fontsize=14)
+    ax.set_title(r"referenční prvek $\hat T$, bod $\xi$")
+
+    ax = fig.add_subplot(gs[1, 2:4])
+    kresli_transformaci(ax, PHI_Q1, N, detJ=False)
+    x = w @ N
+    for p in range(4):
+        ax.plot(*np.column_stack([x, N[p]]), color=barvy[p], lw=1 + 10 * w[p], alpha=0.75, zorder=2)
+        ax.plot(*N[p], "o", color=barvy[p], ms=6 + 18 * w[p], zorder=3)
+        ax.annotate(rf"$\hat\varphi_{p + 1}(\xi)={w[p]:.3f}$", (x + N[p]) / 2, color=barvy[p], fontsize=11,
+                    ha="center", va="center", bbox=dict(fc="white", ec="none", alpha=0.85))
+    ax.plot(*x, "*", color="tab:red", ms=16, zorder=4)
+    ax.annotate(r"$x=\chi_T(\xi)$", x, xytext=(-12, 12), textcoords="offset points", color="tab:red", fontsize=13,
+                ha="right", bbox=dict(fc="white", ec="none", alpha=0.85))
+    ax.set_title(r"$\chi_T(\xi)=\sum_p\hat\varphi_p(\xi)\,N_{T,p}$: vážený průměr uzlů, $\sum_p\hat\varphi_p(\xi)=1$")
+    fig.text(0.5, 0.29, r"$\longrightarrow$" + "\n" + r"$\chi_T$", fontsize=20, ha="center", va="center")
+    fig.tight_layout()
+    uloz(fig, "05a_chi_z_baze.png")
+
+    # hrana xi_2 = -1: nenulové jen phi^_1 a phi^_2 (lineárně) -> úsečka N_T,1 N_T,2; sousedé na sebe sedí
+    fig, axs = plt.subplots(1, 2, figsize=(14, 4.2), gridspec_kw={"width_ratios": [1, 1.5]})
+    t = np.linspace(-1, 1, 101)
+    hrana = vycisli(PHI_Q1, np.column_stack([t, -1 + 0 * t]))[:, :, 0]
+    for p in range(4):
+        axs[0].plot(t, hrana[:, p] + 0.012 * (p >= 2) * (p - 1.5), color=barvy[p], lw=2.5,
+                    label=rf"$\hat\varphi_{p + 1}(\xi_1,-1)$")
+    axs[0].set_xlabel(r"$\xi_1$ na dolní hraně $\xi_2=-1$")
+    axs[0].legend(fontsize=10)
+    axs[0].set_title(r"na hraně jsou nenulové jen funkce jejích dvou uzlů" + "\n" + r"$\Rightarrow$ hrana se zobrazí na úsečku $N_{T,1}N_{T,2}$")
+
+    N2 = np.array([(3, 0), (5, 0.6), (4.6, 2.6), (2.5, 2)], float)   # soused se společnou hranou N_T,2 N_T,3
+    for M, barva, jmeno in [(N, "tab:blue", "T"), (N2, "tab:orange", "T'")]:
+        s = np.linspace(-1, 1, 9)
+        for c in s:
+            for cara in (np.column_stack([c + 0 * t, t]), np.column_stack([t, c + 0 * t])):
+                axs[1].plot(*chi(PHI_Q1, M, cara).T, color=barva, lw=0.7)
+        axs[1].fill(*M.T, fc="none", ec=barva, lw=2)
+        axs[1].text(*M.mean(axis=0), f"${jmeno}$", fontsize=16, color=barva, ha="center", va="center",
+                    bbox=dict(fc="white", ec="none", alpha=0.8))
+    spol = chi(PHI_Q1, N, np.column_stack([1 + 0 * s, s]))
+    axs[1].plot(*spol.T, "o", color="k", ms=5, label="body mřížky na společné hraně z obou prvků")
+    axs[1].set_aspect("equal")
+    axs[1].legend(loc="upper center", bbox_to_anchor=(0.5, -0.08), fontsize=10)
+    axs[1].set_title("společnou hranu určují jen dva sdílené uzly\n" + r"$\Rightarrow$ obrazy sousedních prvků na sebe přesně navazují")
+    fig.tight_layout()
+    uloz(fig, "05b_hrany_a_sousede.png")
+
+
 def obr_kvadratura():
     fig, axs = plt.subplots(1, 4, figsize=(14, 3.3))
     for (ax_ref, ax_T), phi, uzly, (body, vahy), N in [
@@ -517,6 +598,7 @@ def main():
     obr_referencni_prvky()
     obr_baze(PHI_P1, REF_UZLY["P1 (obr. 6.2)"], "03_baze_P1.png")
     obr_baze(PHI_Q1, REF_UZLY["Q1 (obr. 6.4)"], "04_baze_Q1.png")
+    obr_chi_z_baze()
     obr_transformace()
     obr_kvadratura()
     obr_globalni_baze()
