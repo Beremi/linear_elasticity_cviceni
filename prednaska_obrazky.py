@@ -40,11 +40,11 @@ F = np.array([0.0, -1e-3])
 
 
 # ------------------------------------------------------------ kreslicí funkce pro notebook
-def kresli_sit(ax, coord, elem, gamma0=None, cisla=True, rohy=None):
+def kresli_sit(ax, coord, elem, gamma0=None, cisla=True, rohy=None, barva="0.4"):
     """Síť: uzly (modře), prvky (červeně), lokální čísla prvku 0 (zeleně), uzly na Gamma_0."""
     rohy = rohy or elem.shape[1]
     for e in elem[:, :rohy]:
-        ax.fill(*coord[e].T, fc="none", ec="0.4", lw=0.6)
+        ax.fill(*coord[e].T, fc="none", ec=barva, lw=0.6)
     if gamma0 is not None:
         ax.plot(*coord[gamma0].T, "s", color="tab:red", ms=12 if cisla else 5, zorder=0,
                 label=r"uzly na $\Gamma_0$")
@@ -348,10 +348,13 @@ def obr_matice(coord, elem):
     fig, axs = plt.subplots(1, 3, figsize=(14, 2.6))
     for ax, (nazev, (r1, r2)) in zip(axs, tuhe.items()):
         r = np.column_stack([r1, r2]).ravel()
-        kresli_sit(ax, coord, elem, cisla=False)
-        kresli_sit(ax, coord + 0.25 * r.reshape(-1, 2), elem, cisla=False)
+        kresli_sit(ax, coord, elem, cisla=False, barva="tab:blue")
+        kresli_sit(ax, coord + 0.25 * r.reshape(-1, 2), elem, cisla=False, barva="tab:red")
         ax.set_title(rf"{nazev}: $\|\tilde K r\|$ = {np.abs(Kt @ r).max():.1e}")
-    fig.tight_layout()
+    axs[0].plot([], [], color="tab:blue", label="původní síť")
+    axs[0].plot([], [], color="tab:red", label=r"posunutá síť $x+0{,}25\,r(x)$")
+    fig.legend(loc="upper center", ncol=2, fontsize=10)
+    fig.tight_layout(rect=(0, 0, 1, 0.9))
     uloz(fig, "13_tuhe_pohyby.png")
 
     bt = mkp2d.vektor_sil(ref, coord, elem, F)
