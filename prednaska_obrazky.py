@@ -337,6 +337,26 @@ def obr_matice(coord, elem):
     ax.set_title(r"lokální matice $K_T$, $T=0$ (symetrická)")
     uloz(fig, "10_lokalni_K.png")
 
+    e0 = mkp2d.stupne_volnosti(elem)[T]
+    tabulky = {r"hodnoty $(K_T)_{ab}$ = K_vals[0]": (K0, ".2f"),
+               r"řádky = edof[0, a]": (np.broadcast_to(e0[:, None], (6, 6)), "d"),
+               r"sloupce = edof[0, b]": (np.broadcast_to(e0[None, :], (6, 6)), "d")}
+    fig, axs = plt.subplots(1, 3, figsize=(13, 4.3))
+    for ax, (nazev, (M, fmt)) in zip(axs, tabulky.items()):
+        if fmt == "d":                                   # barva = lokální index a (resp. b)
+            barvy = np.broadcast_to(np.arange(6)[:, None], (6, 6))
+            ax.imshow(barvy if "řádky" in nazev else barvy.T, cmap="Pastel2", vmin=0, vmax=7)
+        else:
+            ax.imshow(M, cmap="RdBu", vmin=-2 * abs(M).max(), vmax=2 * abs(M).max())
+        for (r, s), v in np.ndenumerate(M):
+            ax.text(s, r, format(v, fmt), ha="center", va="center", fontsize=10)
+        ax.set_xticks(range(6), [f"b={b}" for b in range(6)])
+        ax.set_yticks(range(6), [f"a={a}" for a in range(6)])
+        ax.set_title(nazev)
+    fig.suptitle(r"prvek 0: hodnota na pozici $(a,b)$ se přičte na pozici (řádky[a,b], sloupce[a,b]) matice $\tilde K$")
+    fig.tight_layout()
+    uloz(fig, "11a_indexy_prvku.png")
+
     Kt = mkp2d.matice_tuhosti(ref, coord, elem)
     fig, ax = plt.subplots(figsize=(4.5, 4.5))
     ax.spy(Kt, markersize=2, color="0.6")
